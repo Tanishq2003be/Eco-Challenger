@@ -27,7 +27,7 @@ function App() {
         <Route path="/create-team" element={<CreateTeam setUser={setUser} user={user} />} />
         <Route path="/sign-up" element={<SignUp setUser={setUser} user={user} />} />
         <Route path="/log-in" element={<LogIn setUser={setUser} user={user} />} />
-        <Route path="/teams/:team_id" element={<Team setUser={setUser} user={user} />} />
+        <Route path="/teams/:team_code" element={<Team setUser={setUser} user={user} />} />
       </Routes>
     </div>
   );

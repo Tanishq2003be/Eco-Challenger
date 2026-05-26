@@ -1,4 +1,4 @@
-let teams, users;
+let teams, users , goals;
 import mongodb from "mongodb";
 const ObjectId = mongodb.ObjectId;
 
@@ -10,11 +10,14 @@ export default class TeamDAO {
     try {
       teams = await conn.db(process.env.ECOCHALLENGE_NS).collection("teams");
       users = await conn.db(process.env.ECOCHALLENGE_NS).collection("users");
+      goals = await conn.db(process.env.ECOCHALLENGE_NS).collection("goals");
     } catch (e) {
       console.error(`Unable to establish a collection handle in teamDAO: ${e}`);
     }
   }
-
+static async getTeamByIdRaw(teamID) {
+  return await teams.findOne({ _id: ObjectId(teamID) });
+}
   static async addTeam(teamOwner, teamName, teamCode, goals, members) {
     try {
       const teamDoc = {
@@ -40,6 +43,12 @@ export default class TeamDAO {
     }
   }
 
+static async addSingleGoal(teamID, goal) {
+  return await teams.updateOne(
+    { _id: ObjectId(teamID) },
+    { $push: { week_goals: goal } }
+  );
+}
   static async createGoals(teamID, goals) {
     try {
       const updateResponse = await teams.updateOne({ _id: ObjectId(teamID) }, { $set: { week_goals: goals, completed: [] } });
@@ -60,7 +69,16 @@ export default class TeamDAO {
       return { error: e };
     }
   }
+static async getAllGoals() {
+  return await goals.find({ team_id: "none" }).toArray();
+}
 
+static async setWeekGoals(teamID, weekGoals) {
+  return await teams.updateOne(
+    { _id: ObjectId(teamID) },
+    { $set: { week_goals: weekGoals, completed: [] } }
+  );
+}
   static async getTeamByCode(teamCode, userId) {
     try {
       const pipeline = [

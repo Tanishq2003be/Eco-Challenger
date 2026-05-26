@@ -1,4 +1,4 @@
-let users, teams;
+let users, teams ,goals;
 import mongodb from "mongodb";
 const ObjectId = mongodb.ObjectId;
 
@@ -10,6 +10,7 @@ export default class MemberDAO {
     try {
       users = await conn.db(process.env.ECOCHALLENGE_NS).collection("users");
       teams = await conn.db(process.env.ECOCHALLENGE_NS).collection("teams");
+      goals = await conn.db(process.env.ECOCHALLENGE_NS).collection("goals");
     } catch (e) {
       console.error(`Unable to establish a collection handle in memberDAO: ${e}`);
     }

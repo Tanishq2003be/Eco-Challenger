@@ -2,14 +2,39 @@ import { Header, Card, Text, Button } from "../components";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import EcoChallengeDataService from "../services/EcoChallengeService";
-import { useDisclosure, Switch, SimpleGrid, Box, Flex, Avatar, Checkbox, AlertDialog, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, Alert, AlertIcon, AlertTitle, AlertDescription } from "@chakra-ui/react";
-import { Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton } from "@chakra-ui/react";
+import {
+  useDisclosure,
+  Switch,
+  SimpleGrid,
+  Box,
+  Flex,
+  Avatar,
+  Checkbox,
+  AlertDialog,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+} from "@chakra-ui/react";
+import {
+  Drawer,
+  DrawerBody,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerCloseButton,
+} from "@chakra-ui/react";
 
 const Team = ({ user, setUser }) => {
-  let { team_id } = useParams();
+  let { team_code } = useParams();
   let navigate = useNavigate();
   const [team, setTeam] = useState();
-
+  const [newGoal, setNewGoal] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
   const drawer = useDisclosure();
 
@@ -17,8 +42,15 @@ const Team = ({ user, setUser }) => {
     await EcoChallengeDataService.getUser()
       .then(async (response) => {
         if (response.status === 200) {
-          setUser({ loggedIn: true, username: response.data.user.name, id: response.data.user._id });
-          await EcoChallengeDataService.getTeam(team_id, response.data.user._id)
+          setUser({
+            loggedIn: true,
+            username: response.data.user.name,
+            id: response.data.user._id,
+          });
+          await EcoChallengeDataService.getTeam(
+            team_code,
+            response.data.user._id,
+          )
             .then(async (response) => {
               setTeam(response.data);
             })
@@ -36,7 +68,16 @@ const Team = ({ user, setUser }) => {
         navigate("/log-in");
       });
   }, [user]);
+  const handleAddGoal = async () => {
+    if (!newGoal.trim()) return;
 
+    await EcoChallengeDataService.addGoal({
+      team_id: team._id,
+      goal: newGoal,
+    });
+
+    window.location.reload();
+  };
   const handleDelete = async () => {
     const data = { data: { team_id: team._id } };
     await EcoChallengeDataService.deleteTeam(data)
@@ -57,7 +98,10 @@ const Team = ({ user, setUser }) => {
       const g = document.getElementById(goal._id);
       goalState[goal.category] = g.checked;
     });
-    await EcoChallengeDataService.editTeamGoals({ team_id: team._id, goals: goalState }).then((response) => {
+    await EcoChallengeDataService.editTeamGoals({
+      team_id: team._id,
+      goals: goalState,
+    }).then((response) => {
       if (response.status === 200) {
         window.location.reload();
       }
@@ -76,7 +120,10 @@ const Team = ({ user, setUser }) => {
     const week_goals = filtered_goals.map((category) => {
       return category.goals[Math.floor(Math.random() * category.goals.length)];
     });
-    await EcoChallengeDataService.thisWeek({ team_id: team._id, goals: week_goals }).then((response) => {
+    await EcoChallengeDataService.thisWeek({
+      team_id: team._id,
+      goals: team.goals,
+    }).then((response) => {
       if (response.status === 200) {
         window.location.reload();
       }
@@ -90,7 +137,12 @@ const Team = ({ user, setUser }) => {
       const g = document.getElementById(`task-${index}`);
       score += g.checked ? 10 : 0;
     });
-    await EcoChallengeDataService.thisWeekScores({ team_id: team._id, team_code: team.team_code, user_id: user.id, score: score }).then((response) => {
+    await EcoChallengeDataService.thisWeekScores({
+      team_id: team._id,
+      team_code: team.team_code,
+      user_id: user.id,
+      score: score,
+    }).then((response) => {
       if (response.status === 200) {
         window.location.reload();
       }
@@ -112,7 +164,9 @@ const Team = ({ user, setUser }) => {
           <Alert status="error" w="xl">
             <AlertIcon />
             <AlertTitle>Note</AlertTitle>
-            <AlertDescription>This team has been archived and is no longer active.</AlertDescription>
+            <AlertDescription>
+              This team has been archived and is no longer active.
+            </AlertDescription>
           </Alert>
         </Flex>
       )}
@@ -121,10 +175,22 @@ const Team = ({ user, setUser }) => {
         <Card>
           <Text size="large">Standings</Text>
           <Flex align={"center"} direction={"column"}>
-            {team.members?.length === 0 && <Text size="small">No members have joined!</Text>}
+            {team.members?.length === 0 && (
+              <Text size="small">No members have joined!</Text>
+            )}
             {team.members?.map((member, index) => {
               return (
-                <Box bg={"brand.200"} w="80%" rounded="lg" shadow="sm" py={2} my={3} position="relative" cursor={"pointer"} onClick={() => navigate(`/user-profile/${member._id}`)}>
+                <Box
+                  bg={"brand.200"}
+                  w="80%"
+                  rounded="lg"
+                  shadow="sm"
+                  py={2}
+                  my={3}
+                  position="relative"
+                  cursor={"pointer"}
+                  onClick={() => navigate(`/user-profile/${member._id}`)}
+                >
                   <Flex justify={"space-between"} align={"center"} mx={5}>
                     <Avatar bg="brand.200" mr={10} src={member.profile_photo} />
                     <Flex align={"flex-end"} direction={"column"}>
@@ -145,7 +211,7 @@ const Team = ({ user, setUser }) => {
           <Text size="large" color={"brand.300"}>
             Team Goals
           </Text>
-          {!Object.values(team.goals).includes(true) && (
+          {(!team.goals || !Object.values(team.goals).some((v) => v)) && (
             <Text size="small" color={"brand.300"}>
               There are no goals this week!
             </Text>
@@ -153,19 +219,49 @@ const Team = ({ user, setUser }) => {
           <Flex justify={"center"}>
             <Box w={"50%"}>
               <Flex justify={"center"} align={"center"} direction={"column"}>
-                <Flex justify={"center"} align={"flex-start"} direction={"column"}>
+                <Flex
+                  justify={"center"}
+                  align={"flex-start"}
+                  direction={"column"}
+                >
                   {team.week_goals?.map((goal, index) => {
                     return (
-                      <Checkbox id={`task-${index}`} colorScheme={"brand"} size="lg" color={"brand.300"} fontFamily={"Imprima"} my={"1"} borderColor={"Background.100"} textAlign={"left"}>
+                      <Checkbox
+                        id={`task-${index}`}
+                        colorScheme={"brand"}
+                        size="lg"
+                        color={"brand.300"}
+                        fontFamily={"Imprima"}
+                        my={"1"}
+                        borderColor={"Background.100"}
+                        textAlign={"left"}
+                      >
                         {goal}
                       </Checkbox>
                     );
                   })}
                 </Flex>
-                {team.week_goals?.length > 0 && !team.completed.includes(user.id) && (
-                  <Button mt="5" onclick={handleUserProgress}>
-                    Save Progress
-                  </Button>
+                {team.week_goals?.length > 0 &&
+                  !team.completed.includes(user.id) && (
+                    <Button mt="5" onClick={handleUserProgress}>
+                      Save Progress
+                    </Button>
+                  )}
+                {team.owner && !team.archived && (
+                  <Flex mt="4" gap={2} w="100%">
+                    <input
+                      value={newGoal}
+                      onChange={(e) => setNewGoal(e.target.value)}
+                      placeholder="Add custom goal"
+                      style={{
+                        padding: "8px",
+                        borderRadius: "8px",
+                        width: "100%",
+                      }}
+                    />
+
+                    <Button onClick={handleAddGoal}>Add Goal</Button>
+                  </Flex>
                 )}
                 {team.completed?.includes(user.id) && (
                   <Button mt="5" isDisabled={true}>
@@ -182,7 +278,7 @@ const Team = ({ user, setUser }) => {
         <Text size="large">
           Your team code is{" "}
           <Text size="large" fontWeight={"bold"}>
-            {team_id}
+            {team.team_code}
           </Text>
         </Text>
       </Box>
@@ -212,7 +308,7 @@ const Team = ({ user, setUser }) => {
           <Text mt="10" size="large">
             Danger!
           </Text>
-          <Button variant="danger" onclick={onOpen}>
+          <Button variant="danger" onClick={onOpen}>
             Archive Team
           </Button>
         </Box>
@@ -223,14 +319,20 @@ const Team = ({ user, setUser }) => {
         <DrawerContent backgroundColor={"brand.300"}>
           <DrawerCloseButton />
           <DrawerHeader>
-            <Header size="md">Which goals do you want to use for your team?</Header>
+            <Header size="md">
+              Which goals do you want to use for your team?
+            </Header>
           </DrawerHeader>
 
           <DrawerBody>
             {team.total_goals?.map((goal) => {
               return (
                 <Flex justify={"flex-start"} alignItems={"center"}>
-                  <Switch id={goal._id} colorScheme={"brand"} defaultChecked={team.goals[goal.category]} />
+                  <Switch
+                    id={goal._id}
+                    colorScheme={"brand"}
+                    defaultChecked={team.goals[goal.category]}
+                  />
                   <Text ml={"4"} size={"small"}>
                     {goal.category}
                   </Text>
@@ -252,8 +354,17 @@ const Team = ({ user, setUser }) => {
 
       <AlertDialog isOpen={isOpen} onClose={onClose}>
         <AlertDialogOverlay>
-          <AlertDialogContent backgroundColor={"brand.300"} borderColor="brand.100" borderWidth={4}>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold" fontFamily={"Imprima"} color={"brand.100"}>
+          <AlertDialogContent
+            backgroundColor={"brand.300"}
+            borderColor="brand.100"
+            borderWidth={4}
+          >
+            <AlertDialogHeader
+              fontSize="lg"
+              fontWeight="bold"
+              fontFamily={"Imprima"}
+              color={"brand.100"}
+            >
               Archive Team
             </AlertDialogHeader>
 

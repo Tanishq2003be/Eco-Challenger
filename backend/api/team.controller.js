@@ -4,28 +4,66 @@ import { ObjectId } from "mongodb";
 
 export default class TeamCtrl {
   static async apiAddTeam(req, res, next) {
-    try {
-      const teamOwner = ObjectId(req.body.owner);
-      const teamName = req.body.name;
-      const goals = [];
-      const members = [];
+  try {
+    const teamOwner = ObjectId(req.body.owner);
+    const teamName = req.body.name;
 
-      const date = new Date();
-      const buff = new Buffer(date);
-      let teamId = buff.toString("base64").substring(26, 31);
+    const members = [teamOwner];
 
-      let teamCodeName = teamName.replace(/ /g, "-").toLowerCase().substring(0, 5);
+    const date = new Date();
+    const buff = Buffer.from(date.toString());
+    let teamId = buff.toString("base64").substring(0, 5);
 
-      const teamCode = `${teamCodeName}-${teamId}`;
+    let teamCodeName = teamName.replace(/ /g, "-").toLowerCase().substring(0, 5);
+    const teamCode = `${teamCodeName}-${teamId}`;
 
-      const TeamResponse = await TeamDAO.addTeam(teamOwner, teamName, teamCode, goals, members);
-      res.json({ status: "success" });
-    } catch (e) {
-      console.log(`error in TeamCtrl: ${e}`);
-      res.status(500).json({ error: e });
-    }
+    // ✅ default categories (auto-selected)
+    const defaultGoals = {
+      "Recycling": true,
+      "Energy Saving": true,
+      "Water Conservation": true
+    };
+
+    // ✅ create team
+    const inserted = await TeamDAO.addTeam(
+      teamOwner,
+      teamName,
+      teamCode,
+      defaultGoals,
+      members
+    );
+
+    const teamID = inserted.insertedId;
+
+    const totalGoals = await TeamDAO.getAllGoals();
+
+    const filtered = totalGoals.filter(g => defaultGoals[g.category]);
+
+    const week_goals = filtered.map(g =>
+      g.goals[Math.floor(Math.random() * g.goals.length)]
+    );
+
+    await TeamDAO.setWeekGoals(teamID, week_goals);
+
+    res.json({ status: "success", team_code: teamCode });
+  } catch (e) {
+    console.log(`error in TeamCtrl: ${e}`);
+    res.status(500).json({ error: e });
   }
+}
 
+
+  static async apiAddWeekGoal(req, res) {
+  try {
+    const { team_id, goal } = req.body;
+
+    await TeamDAO.addSingleGoal(team_id, goal);
+
+    res.json({ status: "success" });
+  } catch (e) {
+    res.status(500).json({ error: e });
+  }
+}
   static async apiEditTeam(req, res, next) {
     try {
       const teamID = req.body.team_id;
@@ -39,19 +77,29 @@ export default class TeamCtrl {
     }
   }
 
-  static async apiCreateGoals(req, res, next) {
-    try {
-      const teamID = req.body.team_id;
-      const goals = req.body.goals;
+ static async apiCreateGoals(req, res, next) {
+  try {
+    const teamID = req.body.team_id;
+    const goals = req.body.goals;
 
-      const EditResponse = await TeamDAO.createGoals(teamID, goals);
-      res.json({ status: "success" });
-    } catch (e) {
-      console.log(`error in TeamCtrl: ${e}`);
-      res.status(500).json({ error: e });
-    }
+    await TeamDAO.editTeam(teamID, goals);
+
+    const totalGoals = await TeamDAO.getAllGoals();
+
+    const filtered = totalGoals.filter(g => goals[g.category]);
+
+    const week_goals = filtered.map(g =>
+      g.goals[Math.floor(Math.random() * g.goals.length)]
+    );
+
+    await TeamDAO.setWeekGoals(teamID, week_goals);
+
+    res.json({ status: "success" });
+  } catch (e) {
+    console.log(`error in TeamCtrl: ${e}`);
+    res.status(500).json({ error: e });
   }
-
+}
   static async apiUpdateScore(req, res, next) {
     try {
       const userID = req.body.user_id;

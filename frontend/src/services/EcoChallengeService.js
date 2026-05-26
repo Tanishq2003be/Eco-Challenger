@@ -39,7 +39,9 @@ class EcoChallengeDataService {
   addMember(data) {
     return http.patch("/join-team", data);
   }
-
+  addGoal(data) {
+    return http.post("/team/add-goal", data);
+  }
   addTeam(data) {
     return http.post("/teams", data);
   }
@@ -48,7 +50,6 @@ class EcoChallengeDataService {
     return http.delete("/teams", data);
   }
 
-  // Goals and Scores
   editTeamGoals(data) {
     return http.put("/teams", data);
   }
