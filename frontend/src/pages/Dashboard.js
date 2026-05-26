@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Header, Card, Text } from "../components";
 import { useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";

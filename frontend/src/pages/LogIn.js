@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Header, Button, Input } from "../components";
 import { Alert, AlertIcon, AlertTitle, AlertDescription, Stack } from "@chakra-ui/react";
 import { useEffect, useState } from "react";

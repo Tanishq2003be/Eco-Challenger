@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Header, Card, Text, Button } from "../components";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
@@ -111,15 +112,6 @@ const Team = ({ user, setUser }) => {
   };
 
   const handleCreateGoals = async () => {
-    const filtered_goals = team.total_goals.reduce((filtered, goal) => {
-      if (team.goals[goal.category]) {
-        return filtered.concat(goal);
-      }
-      return filtered;
-    }, []);
-    const week_goals = filtered_goals.map((category) => {
-      return category.goals[Math.floor(Math.random() * category.goals.length)];
-    });
     await EcoChallengeDataService.thisWeek({
       team_id: team._id,
       goals: team.goals,

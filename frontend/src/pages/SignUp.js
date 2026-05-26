@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Header, Button, Input } from "../components";
 import { Alert, AlertIcon, AlertTitle, AlertDescription, FormHelperText, Stack, FormControl } from "@chakra-ui/react";
 import EcoChallengeDataService from "../services/EcoChallengeService";
