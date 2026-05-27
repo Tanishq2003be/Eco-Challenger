@@ -17,8 +17,8 @@ const app = express();
 app.use(express.json());
 
 app.use((req, res, next) => {
-  if (req.headers.origin === "https://eco-challenger-three.vercel.app") {
-    res.setHeader("Access-Control-Allow-Origin", "https://eco-challenger-three.vercel.app");
+  if (req.headers.origin === "http://localhost:3000") {
+    res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE");
     res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, X-Auth-Token");
   }
@@ -27,7 +27,7 @@ app.use((req, res, next) => {
 
 app.use(
   cors({
-    origin: "https://eco-challenger-three.vercel.app",
+    origin: "http://localhost:3000",
     credentials: true,
   })
 );
